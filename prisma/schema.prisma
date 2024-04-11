@@ -29,15 +29,9 @@ model Account {
   @@unique([providerId, providerAccountId])
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  expires      DateTime
-  sessionToken String   @unique
-  accessToken  String   @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id])
+enum UserRole {
+  ADMIN
+  USER
 }
 
 model User {
@@ -47,12 +41,8 @@ model User {
   password      String
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          UserRole  @default(USER)
   accounts      Account[]
-  sessions      Session[]
-  Post          Post[]
-  Follow        Follow[]
 }
 
 model VerificationRequest {
@@ -64,28 +54,4 @@ model VerificationRequest {
   updatedAt  DateTime @updatedAt
 
   @@unique([identifier, token])
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  userId    String
-  desc      String
-  image     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Follow {
-  id        String   @id @default(cuid())
-  userId    String
-  status    Status
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-enum Status {
-  FOLLOWING
-  FOLLOWER
 }

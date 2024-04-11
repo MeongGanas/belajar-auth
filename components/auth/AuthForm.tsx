@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import Link from "next/link";
-import { signinSchema, signupSchema } from "@/lib/schema";
+import { signinSchema, signupSchema } from "@/schema/schema";
 import signup from "@/actions/signup";
 import { useState, useTransition } from "react";
 import { FormError, FormSuccess } from "./formMessage";

@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { signupSchema } from "@/lib/schema";
+import { signupSchema } from "@/schema/schema";
 import db from "@/prisma/client";
 import { getUserByEmail } from "@/app/data/user";
 
