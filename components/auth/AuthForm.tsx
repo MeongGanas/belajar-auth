@@ -25,8 +25,16 @@ import signup from "@/actions/signup";
 import { useState, useTransition } from "react";
 import { FormError, FormSuccess } from "./formMessage";
 import login from "@/actions/login";
+import GoogleBtn from "./GoogleLogin";
+import { useSearchParams } from "next/navigation";
 
 export function SigninForm() {
+  const searchParams = useSearchParams();
+  const urlError =
+    searchParams.get("error") === "OAuthAccountNotLinked"
+      ? "Email already taken with another provider!"
+      : "";
+
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
@@ -96,15 +104,13 @@ export function SigninForm() {
               )}
             />
             <FormSuccess message={success} />
-            <FormError message={error} />
+            <FormError message={error || urlError} />
             <Button type="submit" className="w-full" disabled={isPending}>
               Login
             </Button>
-            <Button variant="outline" className="w-full">
-              Login with Google
-            </Button>
           </form>
         </Form>
+        <GoogleBtn />
 
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
