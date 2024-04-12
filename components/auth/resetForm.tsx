@@ -20,37 +20,28 @@ import {
   CardTitle,
 } from "../ui/card";
 import Link from "next/link";
-import { signinSchema } from "@/schema/schema";
+import { resetSchema } from "@/schema/schema";
 import { useState, useTransition } from "react";
 import { FormError, FormSuccess } from "./formMessage";
-import login from "@/actions/login";
-import GoogleBtn from "./GoogleLogin";
-import { useSearchParams } from "next/navigation";
+import { reset } from "@/actions/reset";
 
-export default function SigninForm() {
-  const searchParams = useSearchParams();
-  const urlError =
-    searchParams.get("error") === "OAuthAccountNotLinked"
-      ? "Email already taken with another provider!"
-      : "";
-
+export default function ResetForm() {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof signinSchema>>({
-    resolver: zodResolver(signinSchema),
+  const form = useForm<z.infer<typeof resetSchema>>({
+    resolver: zodResolver(resetSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof signinSchema>) {
+  function onSubmit(values: z.infer<typeof resetSchema>) {
     setError("");
     setSuccess("");
     startTransition(() => {
-      login(values).then((data) => {
+      reset(values).then((data) => {
         setError(data?.error);
         setSuccess(data?.success);
       });
@@ -58,11 +49,11 @@ export default function SigninForm() {
   }
 
   return (
-    <Card className="mx-auto max-w-sm">
+    <Card className="mx-auto min-w-96 max-w-sm">
       <CardHeader>
-        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardTitle className="text-2xl">Reset Password</CardTitle>
         <CardDescription>
-          Enter your email and password below to login to your account
+          Forgot your password? Fill the form below
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -85,45 +76,18 @@ export default function SigninForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex justify-between">
-                    <FormLabel>Password</FormLabel>
-                    <Link
-                      href="/auth/reset"
-                      className="ml-auto inline-block text-sm underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  </div>
-                  <FormControl>
-                    <Input
-                      placeholder="******"
-                      type="password"
-                      disabled={isPending}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormSuccess message={success} />
-            <FormError message={error || urlError} />
+            <FormError message={error} />
             <Button type="submit" className="w-full" disabled={isPending}>
-              Login
+              Send reset email
             </Button>
           </form>
         </Form>
-        <GoogleBtn title="Login" />
 
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
           <Link href="/auth/register" className="underline">
-            Sign up
+            Back to Login
           </Link>
         </div>
       </CardContent>
