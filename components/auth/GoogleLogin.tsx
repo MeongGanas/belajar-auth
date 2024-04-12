@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { FcGoogle } from "react-icons/fc";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 
-export default function GoogleBtn() {
+export default function GoogleBtn({ title }: { title: string }) {
   const action = () => {
     signIn("google", { callbackUrl: DEFAULT_LOGIN_REDIRECT });
   };
@@ -15,7 +15,7 @@ export default function GoogleBtn() {
       className="w-full mt-5 flex gap-2 items-center"
       onClick={action}
     >
-      <FcGoogle className="w-6 h-6" /> Login with Google
+      <FcGoogle className="w-6 h-6" /> {title} with Google
     </Button>
   );
 }
