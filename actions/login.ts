@@ -5,8 +5,11 @@ import { signIn } from "@/auth";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { AuthError } from "next-auth";
 import { getUserByEmail } from "@/app/data/user";
-import { generateVerificationToken } from "@/lib/token";
-import { sendVerificationEmail } from "@/lib/mail";
+import { generateTwoFactorToken, generateVerificationToken } from "@/lib/token";
+import { sendTwoFactorEmail, sendVerificationEmail } from "@/lib/mail";
+import { getTwoFactorTokenByEmail } from "@/app/data/two-factor-token";
+import db from "@/prisma/client";
+import { getTwoFactorTokenConfirmationByUserId } from "@/app/data/two-factor-confirm";
 
 export default async function login(values: z.infer<typeof signinSchema>) {
   const validFields = signinSchema.safeParse(values);
@@ -15,7 +18,7 @@ export default async function login(values: z.infer<typeof signinSchema>) {
     return { error: "Invalid Fields" };
   }
 
-  const { email, password } = validFields.data;
+  const { email, password, code } = validFields.data;
 
   const existingUser = await getUserByEmail(email);
 
@@ -35,6 +38,42 @@ export default async function login(values: z.infer<typeof signinSchema>) {
     return { success: "Confirmation email sent!" };
   }
 
+  // Two Factor Confirmation
+  if (existingUser.isTwoFactorEnabled && existingUser.email) {
+    if (code) {
+      const twoFactorToken = await getTwoFactorTokenByEmail(existingUser.email);
+      if (!twoFactorToken) return { twoFAerror: "Invalid Code!" };
+
+      if (twoFactorToken.token !== code) return { twoFAerror: "Invalid Code!" };
+
+      const hasExpired = new Date(twoFactorToken.expires) < new Date();
+
+      if (hasExpired) return { twoFAerror: "Code has expired!" };
+
+      await db.twoFactorToken.delete({ where: { id: twoFactorToken.id } });
+
+      const existingConfirmation = await getTwoFactorTokenConfirmationByUserId(
+        existingUser.id
+      );
+
+      if (existingConfirmation) {
+        await db.twoFactorConfirmation.delete({
+          where: { id: existingConfirmation.id },
+        });
+      }
+
+      await db.twoFactorConfirmation.create({
+        data: { userId: existingUser.id },
+      });
+    } else {
+      const twoFactorToken = await generateTwoFactorToken(email);
+      await sendTwoFactorEmail(twoFactorToken.email, twoFactorToken.token);
+
+      return { twoFactor: true };
+    }
+  }
+
+  // Login
   try {
     await signIn("credentials", {
       email,

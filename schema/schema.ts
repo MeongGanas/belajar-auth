@@ -6,6 +6,7 @@ export const signinSchema = z.object({
     .string()
     .min(6, { message: "Minimum 6 characters required" })
     .max(50),
+  code: z.optional(z.string()),
 });
 
 export const signupSchema = z.object({

@@ -34,7 +34,9 @@ export default function SigninForm() {
       ? "Email already taken with another provider!"
       : "";
 
+  const [showTwoFactor, setShowTwoFactor] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>("");
+  const [twoFAerror, setTwoFAerror] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
 
@@ -43,6 +45,7 @@ export default function SigninForm() {
     defaultValues: {
       email: "",
       password: "",
+      code: "",
     },
   });
 
@@ -50,10 +53,27 @@ export default function SigninForm() {
     setError("");
     setSuccess("");
     startTransition(() => {
-      login(values).then((data) => {
-        setError(data?.error);
-        setSuccess(data?.success);
-      });
+      login(values)
+        .then((data) => {
+          if (data?.error) {
+            form.reset();
+            setError(data.error);
+          }
+
+          if (data?.success) {
+            form.reset();
+            setSuccess(data.success);
+          }
+
+          if (data?.twoFAerror) {
+            setTwoFAerror(data.twoFAerror);
+          }
+
+          if (data?.twoFactor) {
+            setShowTwoFactor(true);
+          }
+        })
+        .catch((err) => setError("Something went wrong!"));
     });
   }
 
@@ -68,53 +88,78 @@ export default function SigninForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="your@email.com"
-                      {...field}
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex justify-between">
-                    <FormLabel>Password</FormLabel>
-                    <Link
-                      href="/auth/reset"
-                      className="ml-auto inline-block text-sm underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  </div>
-                  <FormControl>
-                    <Input
-                      placeholder="******"
-                      type="password"
-                      disabled={isPending}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!showTwoFactor && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="your@email.com"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          href="/auth/reset"
+                          className="ml-auto inline-block text-sm underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
+                      <FormControl>
+                        <Input
+                          placeholder="******"
+                          type="password"
+                          disabled={isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {showTwoFactor && (
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="your code"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormSuccess message={success} />
-            <FormError message={error || urlError} />
+            <FormError message={error || twoFAerror || urlError} />
             <Button type="submit" className="w-full" disabled={isPending}>
-              Login
+              {showTwoFactor ? "Confirm" : "Login"}
             </Button>
           </form>
         </Form>
